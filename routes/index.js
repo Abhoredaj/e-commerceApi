@@ -2,20 +2,17 @@
 const express = require('express');
 const router = express.Router();
 
-// Import the products controller to handle product-related routes
-const productsController = require('../controllers/products_controller');
+const homeController = require('../controllers/home_controller');
+const verifyToken = require('../config/verifyToken'); // Import the verifyToken middleware
 
-// Route to fetch all products (GET /products)
-router.get('/products', productsController.products);
+router.get('/', verifyToken, homeController.products);
+router.get('/:userId', homeController.getUserData);
 
-// Route to create a new product (POST /products/create)
-router.post('/products/create', productsController.create);
-
-// Route to delete a product by ID (DELETE /products/:productID)
-router.delete('/products/:productID', productsController.delete);
-
-// Route to update a product's quantity by ID (POST /products/:productID/update_quantity/)
-router.post('/products/:productID/update_quantity/', productsController.updateQuantity);
+router.use('/users', require('./users'));
+router.use('/products', require('./products'));
+router.use('/feedbacks', require('./feedbacks'));
+console.log('router loaded');
 
 // Export the router for use in the main Express application
 module.exports = router;
+

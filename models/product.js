@@ -7,13 +7,22 @@ const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true, // Indicates that 'name' is a required field
-        unique: true,  // Ensures that each product has a unique name
     },
     // Define the 'quantity' field with type Number, which is required
     quantity: {
         type: Number,
         required: true, // Indicates that 'quantity' is a required field
-    }
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    feedback: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Feedback'
+        }
+    ]
 }, {
     timestamps: true // Adds 'createdAt' and 'updatedAt' timestamps to each document
 });

@@ -1,5 +1,6 @@
 // Import the Product model for database operations
 const Product = require('../models/product');
+const Feedback = require('../models/feedback');
 
 // Controller function to fetch all products
 module.exports.products = async function(req, res){
@@ -27,23 +28,41 @@ module.exports.products = async function(req, res){
 module.exports.create = async function(req, res){
     try{
         // Create a new Product document with data from the request body
+        const userId = req.userId;
+
+        // Retrieve all product names for the user (case-insensitive)
+        const existingProductNames = await Product.find(
+          {
+            user: userId,
+          },
+          'name -_id' // Project only the 'name' field and exclude '_id'
+        ).lean();
+
+        // Check if a product with the same name (case-insensitive) already exists for the user
+        const productWithSameName = existingProductNames.find(
+          (product) => product.name.toLowerCase() === productName.toLowerCase()
+        );
+
+        if (productWithSameName) {
+          // If a product with the same name already exists (case-insensitive), you can choose to handle it as per your requirements.
+          // For example, return an error response.
+          return res.status(400).json({
+            message: 'Product with the same name already exists for this user',
+          });
+        }
+
         const newProduct = new Product({
             name: req.body.name,
-            quantity: req.body.quantity
+            quantity: req.body.quantity,
+            user: userId
         });
         // Save the new product to the database
         await newProduct.save();
         
-        // Format the product data to include only relevant fields
-        const productData = {
-            name: newProduct.name,
-            quantity: newProduct.quantity,
-        };
-        
         // Respond with the newly created product data in a JSON response
-        return res.status(200).json({
+        return res.status(200).json({ 
             data: {
-              product: productData,
+              product: newProduct,
             }
           });
     }catch(err){
@@ -56,33 +75,63 @@ module.exports.create = async function(req, res){
 }
 
 // Controller function to delete a product by its ID
-module.exports.delete = async function(req, res){
-    try{
-        // Find the product by its ID and delete it
-        await Product.findByIdAndDelete(req.params.productID);
+module.exports.delete = async function (req, res) {
+  try {
+    const productId = req.params.productID;
+    const userId = req.userId; // Get the user ID from the authentication token
 
-        // Respond with a success message in a JSON response
-        return res.status(200).json({
-            data: {
-                message: "Product deleted"
-            }
-        });
+    // Find the product by its ID
+    const product = await Product.findById(productId);
 
-    }catch(err){
-        console.log('********', err);
-        // Respond with a 500 Internal Server Error if an error occurs
-        return res.status(500).json({
-            message: "Internal Server Error"
-        });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
     }
-}
+
+    // Check if the user is authorized to delete the product
+    if (product.user.toString() !== userId) {
+      return res.status(403).json({ message: 'Unauthorized: You are not allowed to delete this product' });
+    }
+
+    // Delete associated feedbacks, if any
+    const feedbackIds = product.feedbacks; // Assuming feedbacks is an array of feedback IDs
+
+    if (feedbackIds && feedbackIds.length > 0) {
+      // Delete the feedbacks from the feedback collection
+      await Feedback.deleteMany({ _id: { $in: feedbackIds } });
+    }
+
+    // Delete the product
+    await product.remove();
+
+    // Respond with the deleted product's ID and a success message in a JSON response
+    return res.status(200).json({
+      data: {
+        productId: productId,
+        message: 'Product and associated feedbacks deleted',
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    // Respond with a 500 Internal Server Error if an error occurs
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
+};
+
 
 // Controller function to update a product's quantity
 module.exports.updateQuantity = async function(req, res){
     try {
         // Find the product by its ID
         const product = await Product.findById(req.params.productID);
-    
+        const userId = req.userId; // Get the user ID from the authentication token
+
+        // Check if the user is authorized to delete the product
+        if (product.user.toString() !== userId) {
+          return res.status(403).json({ message: 'Unauthorized: You are not allowed to delete this product' });
+        }
+
         // Calculate the updated quantity based on the query parameter
         const updatedQuantity = parseInt(product.quantity) + parseInt(req.query.number);
         if (updatedQuantity < 0) {

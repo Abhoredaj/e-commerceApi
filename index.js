@@ -11,11 +11,20 @@ const port = 8000;
 
 // Require the Mongoose database connection
 const db = require('./config/mongoose');
+const verifyToken = require('./config/verifyToken');
+const jwtConfig = require('./config/jwt');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 // Middleware to parse URL-encoded and JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
 app.use(bodyParser.json()); // Parse JSON data
 app.use(express.json()); // Parse JSON data
+
+app.use(express.static('./assets'));
+// set up the view engine
+app.set('view engine', 'ejs');
+app.set('views', './views');
 
 // Include the routes defined in the './routes' module
 app.use('/', require('./routes'));
