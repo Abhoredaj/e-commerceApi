@@ -43,12 +43,12 @@ You will receive a confirmation message confirming successful deletion.
 ## Updating Product Quantity
 To modify the quantity of a product, use the following steps:
 
--- Copy the object ID of the target product.
--- Insert the ID after "localhost:8000/products/" in the URL.
--- After the ID, add "/update_quantity/?number={x}" to the URL, where 'x' represents the quantity change value.
--- The complete URL should appear as "localhost:8000/products/{id}/update_quantity/?number={x}."
--- Execute a POST request.
--- You will receive a confirmation message containing the updated product details.
+--Copy the object ID of the target product.
+--Insert the ID after "localhost:8000/products/" in the URL.
+--After the ID, add "/update_quantity/?number={x}" to the URL, where 'x' represents the quantity change value.
+--The complete URL should appear as "localhost:8000/products/{id}/update_quantity/?number={x}."
+--Execute a POST request.
+--You will receive a confirmation message containing the updated product details.
 
 ## Technology Stack
 This application leverages the Node.js runtime environment and utilizes MongoDB as its database backend, ensuring scalability and efficient data management.
